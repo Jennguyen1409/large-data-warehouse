@@ -1,0 +1,6 @@
+venv/
+airflow_venv/
+__pycache__/
+logs/
+*.log
+data/sales_data.csv
