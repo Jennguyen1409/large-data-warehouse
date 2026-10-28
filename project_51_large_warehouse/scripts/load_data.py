@@ -1,15 +1,10 @@
-# ============================================
-# PROJECT 6: Load Large Data into Star Schema
-# ============================================
 
 import pandas as pd
 from sqlalchemy import create_engine, text
 import logging
 import os
 
-# ============================================
-# SET UP LOGGING
-# ============================================
+
 os.makedirs('logs', exist_ok=True)
 
 logging.basicConfig(
@@ -18,9 +13,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# ============================================
-# EXTRACT - Read CSV
-# ============================================
 def extract_data(file_path):
     """Read the raw CSV file"""
     # Define the exact column names
@@ -35,9 +27,6 @@ def extract_data(file_path):
     print(f"✅ Columns: {list(df.columns)}")
     return df
 
-# ============================================
-# TRANSFORM - Split into dimensions and fact
-# ============================================
 def transform_data(df):
     """Transform raw data into star schema tables"""
     
@@ -63,22 +52,16 @@ def transform_data(df):
     # 4. Fact Table
     fact = df.copy()
     
-    # Map date to date_id
     fact = fact.merge(dates, left_on='date', right_on='order_date', how='left')
     
-    # Keep only fact columns
     fact = fact[['sale_id', 'customer_id', 'product_id', 'date_id', 'quantity', 'unit_price', 'revenue']]
     
-    # Rename to match database schema
     fact = fact.rename(columns={'sale_id': 'order_id', 'unit_price': 'price'})
     
     print(f"✅ Created fact_sales: {len(fact)} rows")
     
     return customers, products, dates, fact
 
-# ============================================
-# LOAD - Insert into PostgreSQL
-# ============================================
 def load_data(customers, products, dates, fact):
     """Load data into PostgreSQL tables"""
     
@@ -87,10 +70,7 @@ def load_data(customers, products, dates, fact):
     engine = create_engine(f"postgresql://postgres:{password}@{db_host}:5433/data_projects")
     
     print("📥 Recreating tables and loading data...")
-    
-    # We use if_exists='replace' on the real dataframes!
-    # This drops the old broken tables and builds brand new ones with the exact columns.
-    
+   
     customers.to_sql('dim_customer', engine, if_exists='replace', index=False)
     products.to_sql('dim_product', engine, if_exists='replace', index=False)
     dates.to_sql('dim_date', engine, if_exists='replace', index=False)
@@ -99,9 +79,6 @@ def load_data(customers, products, dates, fact):
     logging.info("Data loaded successfully")
     print(f"✅ Loaded all tables to PostgreSQL")
 
-# ============================================
-# RUN PIPELINE
-# ============================================
 def run_pipeline():
     print("=" * 50)
     print("🏗️ STARTING LARGE DATA WAREHOUSE PIPELINE")
@@ -118,8 +95,5 @@ def run_pipeline():
     print("=" * 50)
     logging.info("Warehouse pipeline executed successfully")
 
-# ============================================
-# RUN
-# ============================================
 if __name__ == "__main__":
     run_pipeline()
